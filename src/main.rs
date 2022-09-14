@@ -26,7 +26,21 @@ fn main() {
 fn handter_kobling(mut straum: TcpStream, sidar: &HashMap<String, String>){
     let buf_leser = BufReader::new(&mut straum);
     let spørrelinje = buf_leser.lines().next().unwrap().unwrap();
-    if spørrelinje.contains("GET /"){ handter_henting(&spørrelinje, straum, &sidar); }
+    
+    if spørrelinje.contains("GET /"){ 
+        handter_henting(&spørrelinje, straum, &sidar); 
+    }
+    else if spørrelinje.contains("POST /"){
+        handter_tillegging(&spørrelinje, straum);
+    }
+}
+
+fn handter_tillegging(spørrelinje: &String, mut straum: TcpStream){
+    println!("Mottok POST-spørring.");
+    // let mønster = Regex::new(r"POST /(\w*) HTTP/1.1").unwrap();
+    // let fanget = mønster.captures(&spørrelinje).unwrap();
+    // let fanget = &fanget[1];
+    straum.write_all("Hei".as_bytes()).unwrap();
 }
 
 fn handter_henting(spørrelinje: &String, mut straum: TcpStream, sidar: &HashMap<String, String>){
