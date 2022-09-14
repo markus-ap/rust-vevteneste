@@ -15,29 +15,21 @@ fn main() {
 
 fn handter_kobling(mut straum: TcpStream){
     let buf_leser = BufReader::new(&mut straum);
-
     let spørrelinje = buf_leser.lines().next().unwrap().unwrap();
-    let svar;
 
-    if spørrelinje == "GET / HTTP/1.1"{
-        let status = "HTTP/1.1 200 OK";
-        let innhald = fs::read_to_string("indeks.html").unwrap();
-        let lengde = innhald.len();
-    
-        svar = format!("{status}\r\nContent-Length: {lengde}\r\n\r\n{innhald}");
+    let (status, filnamn) = if spørrelinje == "GET / HTTP/1.1"{
+        ("HTTP/1.1 200 OK", "indeks.html")
     }
-    else if spørrelinje.contains("/hei") {
-        let status = "HTTP/1.1 200 OK";
-        let innhald = fs::read_to_string("hei.html").unwrap();     
-        let lengde = innhald.len();   
-        svar = format!("{status}\r\nContent-Length: {lengde}\r\n\r\n{innhald}");
-    }    
+    else if spørrelinje.contains("/hei"){
+        ("HTTP/1.1 200 OK", "hei.index")
+    }
     else{
-        let status = "HTTP/1.1 404 NotFound";
-        let innhald = fs::read_to_string("404.html").unwrap();
-        let lengde = innhald.len();
-        svar = format!("{status}\r\nContent-Length: {lengde}\r\n\r\n{innhald}");
-    }
+        ("HTTP/1.1 404 NOT FOUND", "404.html")
+    };
+    
+    let innhald = fs::read_to_string(filnamn).unwrap();
+    let lengde = innhald.len();
+    let svar = format!("{status}\r\nContent-Length: {lengde}\r\n\r\n{innhald}");
     
     straum.write_all(svar.as_bytes()).unwrap();
 }
