@@ -3,7 +3,6 @@ use std::{
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
     thread,
-    time::Duration,
     collections::HashMap
 };
 
@@ -29,7 +28,10 @@ fn handter_kobling(mut straum: TcpStream){
 
     let buf_leser = BufReader::new(&mut straum);
     let spørrelinje = buf_leser.lines().next().unwrap().unwrap();
+    if spørrelinje.contains("GET /"){ handter_henting(&spørrelinje); }
+}
 
+fn handter_henting(spørrelinje: &String){
     let mønster = Regex::new(r"GET /(\w*) HTTP/1.1").unwrap();
     let fanget = mønster.captures(&spørrelinje).unwrap();
     let fanget = &fanget[1];
