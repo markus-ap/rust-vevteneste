@@ -3,7 +3,8 @@ use std::{
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
     thread,
-    time::Duration
+    time::Duration,
+    collections::HashMap
 };
 
 fn main() {
@@ -19,22 +20,35 @@ fn main() {
 }
 
 fn handter_kobling(mut straum: TcpStream){
+    use regex::Regex;
+
+    let sidar = HashMap::from([
+        ("", "indeks.html"),
+        ("hei", "hei.html"),
+    ]);
+
     let buf_leser = BufReader::new(&mut straum);
     let spørrelinje = buf_leser.lines().next().unwrap().unwrap();
 
-    let (status, filnamn) = match &spørrelinje[..]{
-        "GET / HTTP/1.1" => ("HTTP/1.1 200 OK", "indeks.html"),
-        "GET /hei HTTP/1.1" => ("HTTP/1.1 200 OK", "hei.html"),
-        "GET /treig HTTP/1.1" => {
-            thread::sleep(Duration::from_secs(5));
-            ("HTTP/1.1 200 OK", "treig.html")
-        },
-        _ => ("HTTP/1.1 404 NOT FOUND", "404.html")
+    let mønster = Regex::new(r"GET /(\w*) HTTP/1.1").unwrap();
+    let fanget = mønster.captures(&spørrelinje).unwrap();
+    let fanget = &fanget[1];
+    
+    let (status, filnamn) = if !sidar.contains_key(fanget){
+        ("HTTP/1.1 404 NOT FOUND", "404.html")
+    }
+    else{
+        let side = sidar[fanget];
+        ("HTTP/1.1 200 OK", side)
     };
 
     let innhald = fs::read_to_string(filnamn).unwrap();
-    let lengde = innhald.len();
-    let svar = format!("{status}\r\nContent-Length: {lengde}\r\n\r\n{innhald}");
+    let svar = lag_svar(status, innhald);
     
     straum.write_all(svar.as_bytes()).unwrap();
+}
+
+fn lag_svar(status: &str, innhald: String) -> String{
+    let lengde = innhald.len();
+    format!("{status}\r\nContent-Length: {lengde}\r\n\r\n{innhald}")
 }
