@@ -1,7 +1,9 @@
 use std::{
     fs,
     io::{prelude::*, BufReader},
-    net::{TcpListener, TcpStream}
+    net::{TcpListener, TcpStream},
+    thread,
+    time::Duration
 };
 
 fn main() {
@@ -9,7 +11,10 @@ fn main() {
 
     for straum in lytter.incoming(){
         let straum = straum.unwrap();
-        handter_kobling(straum);
+
+        thread::spawn(|| {
+            handter_kobling(straum);
+        });
     }
 }
 
@@ -17,16 +22,16 @@ fn handter_kobling(mut straum: TcpStream){
     let buf_leser = BufReader::new(&mut straum);
     let spørrelinje = buf_leser.lines().next().unwrap().unwrap();
 
-    let (status, filnamn) = if spørrelinje == "GET / HTTP/1.1"{
-        ("HTTP/1.1 200 OK", "indeks.html")
-    }
-    else if spørrelinje.contains("/hei"){
-        ("HTTP/1.1 200 OK", "hei.index")
-    }
-    else{
-        ("HTTP/1.1 404 NOT FOUND", "404.html")
+    let (status, filnamn) = match &spørrelinje[..]{
+        "GET / HTTP/1.1" => ("HTTP/1.1 200 OK", "indeks.html"),
+        "GET /hei HTTP/1.1" => ("HTTP/1.1 200 OK", "hei.html"),
+        "GET /treig HTTP/1.1" => {
+            thread::sleep(Duration::from_secs(5));
+            ("HTTP/1.1 200 OK", "treig.html")
+        },
+        _ => ("HTTP/1.1 404 NOT FOUND", "404.html")
     };
-    
+
     let innhald = fs::read_to_string(filnamn).unwrap();
     let lengde = innhald.len();
     let svar = format!("{status}\r\nContent-Length: {lengde}\r\n\r\n{innhald}");
