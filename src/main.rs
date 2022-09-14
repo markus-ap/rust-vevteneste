@@ -7,7 +7,7 @@ use std::{
 };
 
 fn main() {
-    let lytter = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let lytter = TcpListener::bind("127.0.0.1:7878").unwrap();    
 
     for straum in lytter.incoming(){
         let straum = straum.unwrap();
@@ -19,6 +19,12 @@ fn main() {
 }
 
 fn handter_kobling(mut straum: TcpStream){
+    let buf_leser = BufReader::new(&mut straum);
+    let spørrelinje = buf_leser.lines().next().unwrap().unwrap();
+    if spørrelinje.contains("GET /"){ handter_henting(&spørrelinje, straum); }
+}
+
+fn handter_henting(spørrelinje: &String, mut straum: TcpStream){
     use regex::Regex;
 
     let sidar = HashMap::from([
@@ -26,12 +32,6 @@ fn handter_kobling(mut straum: TcpStream){
         ("hei", "hei.html"),
     ]);
 
-    let buf_leser = BufReader::new(&mut straum);
-    let spørrelinje = buf_leser.lines().next().unwrap().unwrap();
-    if spørrelinje.contains("GET /"){ handter_henting(&spørrelinje); }
-}
-
-fn handter_henting(spørrelinje: &String){
     let mønster = Regex::new(r"GET /(\w*) HTTP/1.1").unwrap();
     let fanget = mønster.captures(&spørrelinje).unwrap();
     let fanget = &fanget[1];
